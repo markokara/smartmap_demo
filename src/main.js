@@ -4,6 +4,7 @@ import { initMap, applyBasemap } from "./map/initMap.js";
 import { loadAllData } from "./data/loadData.js";
 import { computeRoute } from "./route/route.js";
 import { addDebugLayers, setDebugLayersVisible, updateDebugOverlay } from "./map/debug.js";
+import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map/simulation.js";
 
 (async function start(){
   // i18n başlangıcı
@@ -25,19 +26,57 @@ import { addDebugLayers, setDebugLayersVisible, updateDebugOverlay } from "./map
   const state = {
     startCoord:null, destCoord:null, lastKnown:null,
     followOn:false, pickMode:"none", profile:"walk", data,
-    lastHeading:null
+    lastHeading:null,
+    isSimulating: false
   };
+
+  // Kullanıcının konumunu (gerçek veya simüle) temsil eden tekil marker
+  const userDotEl = document.createElement('div');
+  userDotEl.className = 'user-dot';
+  const userHeadingEl = document.createElement('div');
+  userHeadingEl.className = 'user-heading';
+  userHeadingEl.style.display = "none";
+  userDotEl.appendChild(userHeadingEl);
+  const userDotMarker = new maplibregl.Marker(userDotEl).setLngLat(map.getCenter()).addTo(map);
+
+  /**
+   * Kullanıcının konumunu (hem state hem de harita üzerinde) güncelleyen merkezi fonksiyon.
+   * @param {number[]} coords - [lon, lat]
+   */
+  function updateUserPosition(coords) {
+    state.lastKnown = coords;
+    if (userDotMarker) {
+      userDotMarker.setLngLat(coords);
+    }
+    const bearing = getBearingTowardsDest(coords, state.destCoord) ?? state.lastHeading;
+    if (bearing != null) {
+      userHeadingEl.style.setProperty("--bearing", `${bearing}deg`);
+      userHeadingEl.style.display = "block";
+    } else {
+      userHeadingEl.style.display = "none";
+    }
+    setSource("me", fcPoint(coords));
+  }
+
   const geoCfg = CONFIG.GEOLOCATION || {};
   const smoothPosition = createPositionFilter(geoCfg.smoothingAlpha ?? 0.25);
 
   // GPS
-  if ('geolocation' in navigator){
+  const simCfg = CONFIG.SIM_USER || {};
+
+  if (!simCfg.enabled && 'geolocation' in navigator){
     try{ navigator.geolocation.getCurrentPosition(()=>{},()=>{}, {enableHighAccuracy:true, timeout:10000}); }catch{}
     navigator.geolocation.watchPosition(p=>{
+      // Gerçek GPS verisi geldiğinde, her türlü simülasyonu durdur.
+      stopSimulation();
+      state.isSimulating = false;
+      document.getElementById("simulate").textContent = "Simülasyon";
+
       const raw = [p.coords.longitude, p.coords.latitude];
       const filtered = smoothPosition(raw);
       if (!filtered) return;
-      state.lastKnown = filtered;
+
+      updateUserPosition(filtered); // merkezi fonksiyon
 
       const speed = Number.isFinite(p.coords.speed) ? p.coords.speed : 0;
       const heading = normalizeHeading(p.coords.heading);
@@ -45,7 +84,6 @@ import { addDebugLayers, setDebugLayersVisible, updateDebugOverlay } from "./map
         state.lastHeading = heading;
       }
 
-      setSource("me", fcPoint(filtered));
       setHeadingTrail(filtered, state.lastHeading);
       if (state.followOn) {
         map.easeTo({ center: filtered, duration: 600, easing: (t)=>t });
@@ -61,6 +99,37 @@ import { addDebugLayers, setDebugLayersVisible, updateDebugOverlay } from "./map
     onProfileChange: (p)=>{ state.profile=p; }
   });
   initBottomSheet();
+
+  // Otomatik demo / sanal kullanıcı
+  if (simCfg.enabled && Array.isArray(simCfg.coord)) {
+    map.__SIM_USER_CFG = { center: simCfg.coord, radiusKm: simCfg.radiusKm, loopDurationMs: simCfg.loopDurationMs };
+    map.jumpTo({ center: simCfg.coord, zoom: CONFIG.DEFAULT_ZOOM, pitch: CONFIG.DEFAULT_PITCH, bearing: CONFIG.DEFAULT_BEARING });
+    updateUserPosition(simCfg.coord);
+  }
+  startUserSimulation(map, updateUserPosition);
+
+  const simulateBtn = document.getElementById("simulate");
+  if (simulateBtn) {
+    simulateBtn.addEventListener("click", () => {
+      if (state.isSimulating) {
+        stopSimulation();
+        startUserSimulation(map, updateUserPosition); // Rota simülasyonu durunca demo simülasyonuna dön
+        state.isSimulating = false;
+        simulateBtn.textContent = "Simülasyon";
+        return;
+      }
+
+      const route = map.getSource('route')._data;
+      if (route && route.features.length > 0) {
+        stopSimulation(); // önce demo simülasyonunu durdur
+        startRouteSimulation(map, route, updateUserPosition);
+        state.isSimulating = true;
+        simulateBtn.textContent = "Durdur";
+      } else {
+        toast("Simülasyon için önce bir rota oluşturun.");
+      }
+    });
+  }
 
   // Basemap
   applyBasemap(map, {
@@ -146,10 +215,22 @@ import { addDebugLayers, setDebugLayersVisible, updateDebugOverlay } from "./map
     if (h < 0) h += 360;
     return h;
   }
+  function getBearingTowardsDest(from, to){
+    if (!Array.isArray(from) || !Array.isArray(to)) return null;
+    const [lon1, lat1] = from.map(v=>v*Math.PI/180);
+    const [lon2, lat2] = to.map(v=>v*Math.PI/180);
+    const dLon = lon2 - lon1;
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+    const brng = Math.atan2(y, x) * 180 / Math.PI;
+    return (brng + 360) % 360;
+  }
 })();
 
 async function chooseStart(state, CONFIG){
   const pol = CONFIG.START_POLICY || {};
+  const sim = CONFIG.SIM_USER || {};
+  if (sim.enabled && Array.isArray(sim.coord)) return sim.coord;
   const order = pol.priority || ["gps","poiCategory","coord"];
 
   for (const step of order) {
@@ -163,4 +244,3 @@ async function chooseStart(state, CONFIG){
   }
   return null;
 }
-

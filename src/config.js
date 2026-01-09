@@ -1,16 +1,16 @@
-/**
+﻿/**
  * src/config.js
  * ============================================================
- * OTEL/ORTAM KONFIGURASYONU — BASIT ve BOZULMAZ
- * Bu dosyayı düzenleyerek otele/ortama uyarlarsın.
+ * OTEL/ORTAM KONFIGURASYONU â€” BASIT ve BOZULMAZ
+ * Bu dosyayÄ± dÃ¼zenleyerek otele/ortama uyarlarsÄ±n.
  */
 
 /* ------------------------------------------------------------
  * 1) KIMLIK ve ANAHTARLAR
  * ----------------------------------------------------------*/
-const HOTEL_ID = "longbeach";
+const HOTEL_ID = "DEMO";
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoibWFya29rYXJhIiwiYSI6ImNtZ291OGdidDF6MWYya3NneTZjMG44bnkifQ.mWg-QQE8KTdhWZ8TrbMyIQ";
+const MAPBOX_TOKEN = "pk.eyJ1IjoibWFya29rYXJhIiwiYSI6ImNtZ291OGdidDF6MWYya3NneTZjMG44bnkifQ.mWg-QQE8KTdhWZ8TrbMyI";
 const MAPTILER_KEY = "ym4UWHwsNK61YUsmqi5C";
 
 /* ------------------------------------------------------------
@@ -20,12 +20,27 @@ const MAPTILER_KEY = "ym4UWHwsNK61YUsmqi5C";
 const ORTHO_BOUNDS = [31.799927, 36.591825, 31.812973, 36.602299];
 const HOTEL_BBOX   = [31.8020, 36.5957, 31.8083, 36.6016];
 
-const DEFAULT_PITCH   = 60;
-const DEFAULT_BEARING = 35;
-const EXTRA_ZOOMOUT   = 0.35;
+const DEFAULT_CENTER  = [31.8055, 36.5985];
+const DEFAULT_ZOOM    = 18;
+const DEFAULT_PITCH   = 48;
+const DEFAULT_BEARING = -45;
+const EXTRA_ZOOMOUT   = 0.05;
 
 const OSM_VISIBLE = true;
-const OSM_OPACITY = 0.05;
+const OSM_OPACITY = 0.02;
+
+// Harita ilk aÃ§Ä±lÄ±ÅŸ davranÄ±ÅŸÄ±
+const FIT_ON_LOAD = false; // true olursa fitBounds yapar, false olursa DEFAULT_ZOOM/CENTER aynen korunur
+
+/* ------------------------------------------------------------
+ * 2.5) DEMO / SANAL KULLANICI
+ * ----------------------------------------------------------*/
+const SIM_USER = {
+  enabled: true,                               // gerÃ§ek GPS yerine sanal kullanÄ±cÄ±yÄ± kullan
+  coord: [31.804406601974023,36.59843141726124], // baÅŸlangÄ±Ã§ konumu 31.804803348455152, 36.600504133118434//
+  radiusKm: 0.007,                              // demo rotasÄ± yarÄ±Ã§apÄ± (km)
+  loopDurationMs: 10000             // tam tur sÃ¼resi
+};
 
 /* ------------------------------------------------------------
  * 3) DRONE / ORTOFOTO TILES (XYZ)
@@ -44,14 +59,14 @@ const LABEL_TILES = {
   template: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   minzoom : 14,
   maxzoom : 19,
-  attribution: "© OpenStreetMap contributors",
+  attribution: "Â© OpenStreetMap contributors",
   opacity : OSM_OPACITY
 };
 
 /* ------------------------------------------------------------
- * 3.5) TERRAIN (YÜKSEKLİK)
- * Terrain dosyaların yoksa enabled:false kalsın.
- * Objenin var olması, kod referans verirse hata engeller.
+ * 3.5) TERRAIN (YÃœKSEKLÄ°K)
+ * Terrain dosyalarÄ±n yoksa enabled:false kalsÄ±n.
+ * Objenin var olmasÄ±, kod referans verirse hata engeller.
  * ----------------------------------------------------------*/
 const TERRAIN = {
   enabled : false,
@@ -67,7 +82,7 @@ const TERRAIN = {
 /* ------------------------------------------------------------
  * 4) VERI DOSYALARI (GeoJSON)
  * ----------------------------------------------------------*/
-const DATA_BASE_URL = "https://aihotels.agency/cdn"; // CDN kökü
+const DATA_BASE_URL = "https://aihotels.agency/cdn"; // CDN kÃ¶kÃ¼
 
 const DATA_PATHS = {
   indoor : "https://aihotels.agency/cdn/geojson/indoor.json",
@@ -80,15 +95,15 @@ const LOCAL_DATA_PATHS = {
   outdoor: "./data/outdoor.json",
   routes : "./data/routes.json",
 };
-const DATA_VERSION = "v1"; // İstersen boş bırak; anlık invalidate için ?v=timestamp kullan
+const DATA_VERSION = "v1"; // Ä°stersen boÅŸ bÄ±rak; anlÄ±k invalidate iÃ§in ?v=timestamp kullan
 
 /* ------------------------------------------------------------
  * 5) ROTA / PROFIL
  * ----------------------------------------------------------*/
 const SPEEDS = { walk: 1.35, bike: 4.5, shuttle: 7.0 }; // m/sn
 const ROUTE_LIMITS = {
-  MAX_CONNECTOR_M    : 30,
-  HIDE_CONNECTOR_LT_M: 5
+  MAX_CONNECTOR_M    : 200,
+  HIDE_CONNECTOR_LT_M: 50
 };
 
 /* ------------------------------------------------------------
@@ -122,8 +137,8 @@ const GEOLOCATION = {
  * 9) HARICI MASKE
  * ----------------------------------------------------------*/
 const MASK = {
-  enabled: true,
-  opacity: 0.55,
+  enabled: false,
+  opacity: 0.2,
   color: "#000000",
   beforeLayerId: "indoor-pts-shadow",
   rotationDeg: 150,
@@ -131,7 +146,7 @@ const MASK = {
 };
 
 /* ------------------------------------------------------------
- * 9.5) SABIT TEST KONUMU (OPS) — Güvenli kapalı
+ * 9.5) SABIT TEST KONUMU (OPS) â€” GÃ¼venli kapalÄ±
  * ----------------------------------------------------------*/
 const TEST_POSITION = {
   enabled   : false,
@@ -152,9 +167,12 @@ export const CONFIG = Object.freeze({
   MAPTILER_KEY,
 
   HOTEL_BBOX,
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
   DEFAULT_PITCH,
   DEFAULT_BEARING,
   EXTRA_ZOOMOUT,
+  FIT_ON_LOAD,
 
   OSM_VISIBLE,
   OSM_OPACITY,
@@ -171,10 +189,12 @@ export const CONFIG = Object.freeze({
   ROUTE_LIMITS,
   START_POLICY,
   GEOLOCATION,
-  TEST_POSITION,
+  
+  SIM_USER,
 
   MASK,
 
   FEATURES,
   DEBUG
 });
+

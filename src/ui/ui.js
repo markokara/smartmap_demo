@@ -1,7 +1,7 @@
-﻿/**
+/**
  * src/ui/ui.js
- * Misafir-dostu panel ve arama/rota UI (2 durak: Açık/Kapalı).
- * Kapalı: panel tamamen ekran altında; sadece dış grab (#grabDock) görünür.
+ * Misafir-dostu panel ve arama/rota UI (2 durak: Acik/Kapali).
+ * Kapali: panel tamamen ekran altinda; sadece dis grab (#grabDock) gorunur.
  */
 
 import { CONFIG } from "../config.js";
@@ -33,7 +33,7 @@ function pickLocalized(props, baseKey, lang = getActiveLang()) {
 export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
   const $ = (id)=> document.getElementById(id);
 
-  // Seçiciler
+  // Seciciler
   const q            = $("q");
   const pickStartBtn = $("pickStart");   // HTML'de olmayabilir
   const pickDestBtn  = $("pickDest");
@@ -58,6 +58,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
   };
   const dispatchSheet = (type) => window.dispatchEvent(new CustomEvent(`app:sheet-${type}`));
   const openSheet = () => dispatchSheet("open");
+  const expandSheet = () => dispatchSheet("expand");
   const closeSheet = () => dispatchSheet("close");
 
   // Mod (search | route)
@@ -79,7 +80,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
     state.pickMode = "none";
     updateGoEnabled();
     setMode('route');
-    if (!opts?.keepSheetClosed) openSheet();
+    if (!opts?.keepSheetClosed) expandSheet();
     if (typeof onRoute === "function") onRoute();
   }
 
@@ -123,6 +124,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
         if (state.pickMode === "dest") showAllCategories();
       }
     });
+    expandSheet();
   }
 
   function showAllCategories(){
@@ -138,26 +140,27 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
       showCategoriesOnly: true
     });
     if (results) results.style.display = "block";
+    expandSheet();
   }
 
-  // Başlangıç butonu (opsiyonel)
+  // Baslangic butonu (opsiyonel)
   if (pickStartBtn && CONFIG.START_POLICY?.showPickStartButton === false) {
     pickStartBtn.style.display = "none";
   } else if (pickStartBtn) {
     pickStartBtn.addEventListener("click", ()=>{
       state.pickMode = (state.pickMode === "start") ? "none" : "start";
-      tip("Haritadan başlangıç noktasına dokunun.");
+      tip("Haritadan baslangic noktasina dokunun.");
     });
   }
 
-  // Hedef seç
+  // Hedef sec
   pickDestBtn?.addEventListener("click", ()=>{
     const activating = state.pickMode !== "dest";
     state.pickMode = activating ? "dest" : "none";
     if (state.pickMode === "dest") {
-      tip("Haritadan hedefe dokunun veya kategori seçin.");
+      tip("Haritadan hedefe dokunun veya kategori secin.");
       showAllCategories();
-      openSheet();
+      expandSheet();
     } else {
       clearCategorySelection(true);
       if (!lastSearch.query && !state.destCoord && results) results.style.display = "none";
@@ -165,13 +168,13 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
     updateGoEnabled();
   });
 
-  // Git → rota hesapla + rota modu
+  // Git ve rota hesapla + rota modu
   goBtn?.addEventListener("click", ()=>{
     if (!state.destCoord) return;
     startNavigation(state.destCoord, { keepSheetClosed: false });
   });
 
-  // GO etkinlik koşulu
+  // GO etkinlik kosulu
   function updateGoEnabled(){ if (goBtn) goBtn.disabled = !state.destCoord; }
 
   // Follow toggle
@@ -205,7 +208,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
   });
 
   // Arama
-  q?.addEventListener("focus", () => openSheet());
+  q?.addEventListener("focus", () => expandSheet());
   q?.addEventListener("input", ()=>{
     const val = (q.value || "").trim();
     if (clearSearchBtn) clearSearchBtn.hidden = !val;
@@ -225,6 +228,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
     renderResults(results, hits, map, state, val, lang, startNavigation, catMatches, {
       onCategorySelect: handleCategorySelect
     });
+    expandSheet();
   });
 
   clearSearchBtn?.addEventListener("click", ()=>{
@@ -283,7 +287,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
     if (clearSearchBtn) clearSearchBtn.hidden = !lastSearch.query;
   });
 
-  // Harita tıklaması
+  // Harita tiklamasi
   map.on("click", (e)=>{
     if (state.pickMode === "dest") {
       state.destCoord = [e.lngLat.lng, e.lngLat.lat];
@@ -298,7 +302,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
       state.pickMode = "none"; updateGoEnabled(); return;
     }
 
-    // normal tık → popup
+    // normal tik -> popup
     const feats = map.queryRenderedFeatures(e.point, {
       layers: ['indoor-pts','outdoor-pts','indoor-fill','outdoor-fill','indoor-line','outdoor-line','indoor-fill-outline','outdoor-fill-outline']
     });
@@ -324,7 +328,7 @@ export function setupUIBindings({ map, state, onRoute, onProfileChange }) {
 }
 
 /* ============================================================
- * Arama + sonuç render
+ * Arama + sonuc render
  * ==========================================================*/
 function simpleSearch(query, allFeats, map, raw) {
   const nq  = norm(query);
@@ -360,18 +364,11 @@ function highlight(text, q){
 function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 function buildCategoryGradient(hex){
-
   const base = (hex || "#2563eb").trim();
-
   const light = mixHex(base, 0.28);
-
   const dark = mixHex(base, -0.2);
-
   return `linear-gradient(135deg, ${light} 0%, ${dark} 100%)`;
-
 }
-
-
 
 function mixHex(hex, amount){
   if (typeof hex !== "string" || !/^#?[0-9a-f]{3,6}$/i.test(hex)) return hex || "#2563eb";
@@ -391,7 +388,6 @@ function mixHex(hex, amount){
 }
 
 function renderResults(resultsEl, list, map, state, rawQ, lang = getActiveLang(), startNav, catMatches = [], options = {}){
-
   if (!resultsEl) return;
 
   resultsEl.innerHTML = "";
@@ -399,175 +395,90 @@ function renderResults(resultsEl, list, map, state, rawQ, lang = getActiveLang()
 
   const frag = document.createDocumentFragment();
 
-
-
   if (options.activeCategory) {
-
     const info = document.createElement("div");
-
     info.className = "hint";
-
     info.style.display = "flex";
-
     info.style.alignItems = "center";
-
     info.style.justifyContent = "space-between";
-
     const countLabel = options.activeCategory.count ?? list.length;
-
     info.innerHTML = `<span><strong>${options.activeCategory.label}</strong> (${countLabel})</span>`;
-
     if (typeof options.onClearCategory === "function") {
-
       const btn = document.createElement("button");
-
       btn.type = "button";
-
       btn.textContent = tt("ui.reset", lang) || "Reset";
-
       btn.style.cssText = "margin-left:12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#0f5132;font-size:12px;padding:4px 10px;cursor:pointer;";
-
       btn.addEventListener("click", options.onClearCategory);
-
       info.appendChild(btn);
-
     }
-
     frag.appendChild(info);
-
   }
-
-
 
   if (catMatches?.length) {
-
     const wrap = document.createElement("div");
-
     wrap.className = "category-suggestions";
-
     catMatches.forEach(cat=>{
-
       const btn = document.createElement("button");
-
       btn.type = "button";
-
       btn.className = "category-suggestion";
-
       const baseColor = cat.color || CAT_COLORS?.[cat.key] || CAT_COLORS?.default || "#2563eb";
-
       btn.style.setProperty("--bg", buildCategoryGradient(baseColor));
-
       btn.style.setProperty("--cat-bg", baseColor);
-
       btn.style.setProperty("--cat-bg-soft", mixHex(baseColor, 0.35));
-
       btn.dataset.category = cat.key;
-
       const plainLabel = cat.label || tt("cats." + cat.key, lang) || cat.key;
-
       let remainder = plainLabel;
-
       if (rawQ) {
-
         const idx = plainLabel.toLowerCase().indexOf(rawQ.toLowerCase());
-
         if (idx >= 0) remainder = plainLabel.slice(idx + rawQ.length).trim();
-
       }
-
       if (!rawQ || !remainder) remainder = cat.key.replace(/[_-]/g, " ");
-
       const subtitle = highlight(remainder, rawQ);
-
       const iconName = cat.icon || ICONS?.[cat.key];
-
       const thumb = iconName
-
         ? `<div class="thumb"><img src="./assets/icons/${iconName}" alt=""/></div>`
-
         : `<div class="thumb"><span>${(plainLabel || cat.key || "?").charAt(0).toUpperCase()}</span></div>`;
-
       btn.innerHTML = `<div class="body">${thumb}<span class="label"><span class="title">${highlight(plainLabel, rawQ)}</span><small>${subtitle}</small></span><span class="count"><span class="value">${cat.count}</span><span class="chevron">&rsaquo;</span></span></div>`;
-
       btn.addEventListener("click", ()=> options.onCategorySelect && options.onCategorySelect(cat, { lang }));
-
       wrap.appendChild(btn);
-
     });
-
     frag.appendChild(wrap);
-
   }
 
-
-
   if (!list.length && !(catMatches?.length)) {
-
     const hint = document.createElement("div");
-
     hint.className = "hint";
-
     hint.textContent = "Sonuc bulunamadi";
-
     frag.appendChild(hint);
-
   } else {
-
     list.forEach((f)=>{
-
       const p = f.properties || {};
-
       const name = pickLocalized(p, "name", lang) || "(isimsiz)";
-
       const level = pickLocalized(p, "level", lang);
-
       const catKey = p.category || "";
-
       const catLabel = catKey ? tt("cats." + catKey, lang) : "";
-
       const catColor = CAT_COLORS?.[catKey] || CAT_COLORS?.default || "#0EA5E9";
-
       const metaParts = [];
-
       if (catLabel) metaParts.push(`<span class="meta-pill"><span class="cat-dot" style="--dot:${catColor}"></span>${highlight(catLabel, rawQ)}</span>`);
-
       if (level) metaParts.push(`<span class="meta-note">${highlight(level, rawQ)}</span>`);
-
       const metaHtml = metaParts.join("");
 
-
-
       const div = document.createElement("div");
-
       div.className = "item";
-
       const metaBlock = metaParts.length ? `<small class="item-meta">${metaHtml}</small>` : "";
-
-      div.innerHTML = `<span class="item-title">${highlight(name, rawQ)}</span>` + (metaBlock ? `
-                       ${metaBlock}` : "");
-
+      div.innerHTML = `<span class="item-title">${highlight(name, rawQ)}</span>` + (metaBlock ? `\n                       ${metaBlock}` : "");
       div.addEventListener("click", ()=>{
-
         const center = coordOfFeature(f);
-
         if (typeof startNav === "function") startNav(center, { keepSheetClosed: false });
-
         showPopup(map, f, center, ()=> startNav && startNav(center, { keepSheetClosed: false }));
-
         resultsEl.style.display = "none";
-
       });
-
       frag.appendChild(div);
-
     });
-
   }
 
   resultsEl.appendChild(frag);
-
   resultsEl.style.display = "block";
-
 }
 
 function buildCategoryStats(allFeats){
@@ -673,33 +584,47 @@ function coordOfFeature(f){
 
 export function initBottomSheet() {
   const sheet    = document.getElementById("sheet");
-  const grabIn   = document.getElementById("grab");      // panel içi küçük grab (açıkken)
-  const grabDock = document.getElementById("grabDock");  // panel dışındaki iki çizgi
+  const grabIn   = document.getElementById("grab");      // panel ici kucuk grab (acikken)
+  const grabDock = document.getElementById("grabDock");  // panel disindaki iki cizgi
   const backdrop = document.getElementById("backdrop");
   if (!sheet || !grabDock) return;
 
   const isOpen = () => sheet.classList.contains("is-open");
+  const isExpanded = () => sheet.classList.contains("is-expanded");
   const openSheet = () => {
     sheet.classList.add("is-open");
+    sheet.classList.remove("is-expanded");
     backdrop?.classList.add("show");
     grabDock?.classList.add("hidden");
-    lockBodyScroll(true);
+    lockBodyScroll(false);
+  };
+  const expandSheet = () => {
+    sheet.classList.add("is-open", "is-expanded");
+    backdrop?.classList.add("show");
+    grabDock?.classList.add("hidden");
+    lockBodyScroll(false);
   };
   const closeSheet = () => {
     sheet.classList.remove("is-open");
+    sheet.classList.remove("is-expanded");
     backdrop?.classList.remove("show");
     grabDock?.classList.remove("hidden");
     lockBodyScroll(false);
   };
-  const toggleSheet = () => (isOpen() ? closeSheet() : openSheet());
+  const toggleSheet = () => {
+    if (!isOpen()) return openSheet();
+    if (isOpen() && !isExpanded()) return expandSheet();
+    return closeSheet();
+  };
 
   window.addEventListener("app:sheet-open", openSheet);
+  window.addEventListener("app:sheet-expand", expandSheet);
   window.addEventListener("app:sheet-close", closeSheet);
 
   requestAnimationFrame(()=> closeSheet());
 
-  grabDock.addEventListener("click", ()=>{ openSheet(); haptic(10); });
-  grabIn?.addEventListener("click", ()=>{ closeSheet(); haptic(8); });
+  grabDock.addEventListener("click", ()=>{ toggleSheet(); haptic(10); });
+  grabIn?.addEventListener("click", ()=>{ toggleSheet(); haptic(8); });
   backdrop?.addEventListener("click", ()=>{ closeSheet(); haptic(8); });
 
   let sy = null;
@@ -733,11 +658,18 @@ export function initBottomSheet() {
   function endDrag(e){
     if (!dragging) return;
     dragging = false;
-    record(e?.clientY ?? last.at(-1)?.y ?? 0);
+    record(e?.clientY ?? (last.at(-1)?.y ?? 0));
     if(last.length>=2){
       const a=last[0], b=last[last.length-1];
       const v=(b.y-a.y)/Math.max(1,b.t-a.t);
-      if(Math.abs(v)>VEL_TH){ v<0 ? openSheet() : closeSheet(); sy=null; return; }
+      if(Math.abs(v)>VEL_TH){
+        if (v < 0) {
+          if (isOpen() && !isExpanded()) expandSheet(); else openSheet();
+        } else {
+          closeSheet();
+        }
+        sy=null; return;
+      }
     }
     const dy = (last.at(-1)?.y ?? 0) - (last[0]?.y ?? 0);
     if (Math.abs(dy) <= 12 && !moved){
@@ -757,7 +689,6 @@ export function initBottomSheet() {
 
   setTimeout(()=>{ if(!isOpen()) openSheet(); }, 350);
 
-  // Geliştiriciye manuel kontrol imkânı (debug)
-  window.__sheet = { open: openSheet, close: closeSheet, toggle: toggleSheet };
+  // Gelistiriciye manuel kontrol imkani (debug)
+  window.__sheet = { open: openSheet, expand: expandSheet, close: closeSheet, toggle: toggleSheet };
 }
-

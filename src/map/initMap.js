@@ -1,6 +1,6 @@
-/**
+﻿/**
  * src/map/initMap.js
- * MapLibre başlangıç + kaynak/katman kurulumu
+ * MapLibre baÅŸlangÄ±Ã§ + kaynak/katman kurulumu
  */
 
 import { CONFIG } from "../config.js";
@@ -9,7 +9,7 @@ import { ICONS, CAT_COLORS } from "../categories.js";
 const emptyFC = () => ({ type: "FeatureCollection", features: [] });
 
 export async function initMap(containerId = "map", cfg = CONFIG) {
-  // ---------- 1) HARİTA ----------
+  // ---------- 1) HARÄ°TA ----------
   const baseStyle = {
     version: 8,
     glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
@@ -18,13 +18,12 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
   };
 
   const [w, s, e, n] = cfg.HOTEL_BBOX;
-  const center = [(w + e) / 2, (s + n) / 2];
 
   const map = new maplibregl.Map({
     container: containerId,
     style: baseStyle,
-    center,
-    zoom: 16,
+    center: cfg.DEFAULT_CENTER,
+    zoom: cfg.DEFAULT_ZOOM,
     pitch: cfg.DEFAULT_PITCH,
     bearing: cfg.DEFAULT_BEARING,
     maxZoom: 25,
@@ -34,21 +33,21 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
   });
 
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
-  map.addControl(new maplibregl.AttributionControl({ customAttribution: "© aihotelstech" }));
+  map.addControl(new maplibregl.AttributionControl({ customAttribution: "Â© aihotelstech" }));
 
   await new Promise((res) => map.on("load", res));
 
   // ---------- 2) BAZ KAYNAKLAR ----------
-  // Mapbox Satellite (altta, düşük önemde – istersen kaldır)
+  // MapTiler Satellite (Mapbox alternatifi)
   map.addSource("sat", {
     type: "raster",
     tiles: [
-      `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x?access_token=${cfg.MAPBOX_TOKEN}`
+      `https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=${cfg.MAPTILER_KEY}`
     ],
     tileSize: 256,
-    attribution: "© Mapbox © OSM"
+    attribution: "Â© MapTiler Â© OSM"
   });
-  map.addLayer({ id: "sat-lyr", type: "raster", source: "sat", paint: { "raster-opacity": 0.35 } });
+  map.addLayer({ id: "sat-lyr", type: "raster", source: "sat", paint: { "raster-opacity": 0.18 } });
 
   // Yerel ORTOFOTO (XYZ)
   if (cfg.DRONE_TILES?.enabled) {
@@ -69,13 +68,13 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     });
   }
 
-  // OSM etiket raster (üstte, yarı saydam)
+  // OSM etiket raster (Ã¼stte, yarÄ± saydam)
   map.addSource("osmRaster", {
     type: "raster",
     tiles: [cfg.LABEL_TILES?.template || "https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
     tileSize: 256,
     maxzoom: cfg.LABEL_TILES?.maxzoom ?? 19,
-    attribution: cfg.LABEL_TILES?.attribution || "© OpenStreetMap contributors"
+    attribution: cfg.LABEL_TILES?.attribution || "Â© OpenStreetMap contributors"
   });
   map.addLayer({
     id: "osm-raster",
@@ -85,7 +84,7 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
   });
 
   // ---------- 3) 3D KAYNAKLAR ----------
-  // DEM kaynağı: önce yerel terrain klasörü
+  // DEM kaynaÄŸÄ±: Ã¶nce yerel terrain klasÃ¶rÃ¼
   let demSourceAdded = false;
   if (cfg.TERRAIN?.enabled) {
     try {
@@ -104,7 +103,7 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     }
   }
 
-  // ---------- 4) UYGULAMA VERİ KAYNAKLARI ----------
+  // ---------- 4) UYGULAMA VERÄ° KAYNAKLARI ----------
   map.addSource("indoor", { type: "geojson", data: emptyFC(), promoteId: "fid" });
   map.addSource("outdoor", { type: "geojson", data: emptyFC(), promoteId: "fid" });
   map.addSource("routes",  { type: "geojson", data: emptyFC(), promoteId: "fid" });
@@ -116,7 +115,7 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
   map.addSource("me-heading", { type: "geojson", data: emptyFC() });
   map.addSource("debug", { type: "geojson", data: emptyFC() });
 
-  // ---------- 5) İKONLAR ----------
+  // ---------- 5) Ä°KONLAR ----------
   await loadIcons(map);
 
   // ---------- 6) KATLAR ----------
@@ -164,9 +163,10 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     type: "line",
     source: "route",
     paint: {
-      "line-color": "#ff7a00",
-      "line-opacity": 0.85,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 14, 6, 18, 12, 22, 22]
+      "line-color": "#1a73e8",
+      "line-opacity": 0.92,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 14, 6.5, 18, 12, 22, 22],
+      "line-blur": 0.3
     },
     layout: { "line-cap": "round", "line-join": "round" },
     filter: ["==", ["get", "role"], "main"]
@@ -175,7 +175,7 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     id: "route-connector",
     type: "line",
     source: "route",
-    paint: { "line-color": "#94a3b8", "line-width": 3, "line-dasharray": [2, 2] },
+    paint: { "line-color": "#8ab4f8", "line-width": 3.2, "line-dasharray": [2, 2], "line-opacity": 0.9 },
     layout: { "line-cap": "round", "line-join": "round" },
     filter: ["==", ["get", "role"], "connector"]
   });
@@ -184,14 +184,14 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     type: "symbol",
     source: "route",
     layout: {
-      "symbol-placement": "line",
-      "text-field": "▶",
-      "text-size": 12,
-      "symbol-spacing": 50,
+      "symbol-placement": "line-center",
+      "text-field": ">",
+      "text-size": 15,
+      "symbol-spacing": 80,
       "text-rotation-alignment": "map",
       "text-keep-upright": false
     },
-    paint: { "text-color": "#ff7a00", "text-halo-color": "#fff", "text-halo-width": 1 },
+    paint: { "text-color": "#1a73e8", "text-halo-color": "#fff", "text-halo-width": 1.2 },
     filter: ["==", ["get", "role"], "main"]
   });
 
@@ -226,7 +226,7 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     paint: { "circle-radius": 6, "circle-color": "#1d4ed8", "circle-stroke-color": "#fff", "circle-stroke-width": 1.6 }
   });
 
-  // ---------- 7) 3D + OSM OPASİTE ----------
+  // ---------- 7) 3D + OSM OPASÄ°TE ----------
   applyBasemap(map, {
     use3D     : cfg.FEATURES?.enable3DByDefault === true,
     osmVisible: cfg.OSM_VISIBLE,
@@ -243,7 +243,7 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
   return { map };
 }
 
-/* ===== Yardımcılar =================================================== */
+/* ===== YardÄ±mcÄ±lar =================================================== */
 
 async function loadIcons(map) {
   const defaultFile = ICONS.default || "poi-marker-default.png";
@@ -429,7 +429,7 @@ export function applyBasemap(map, opts = {}) {
   const enable3D = use3D && hasOmtSource;
 
   if (use3D && !hasOmtSource && !warnedNo3DSource) {
-    console.warn("[3d] Vektör veri kaynağı bulunamadığı için 3D katmanlar devre dışı bırakıldı.");
+    console.warn("[3d] VektÃ¶r veri kaynaÄŸÄ± bulunamadÄ±ÄŸÄ± iÃ§in 3D katmanlar devre dÄ±ÅŸÄ± bÄ±rakÄ±ldÄ±.");
     warnedNo3DSource = true;
   }
 
@@ -453,7 +453,7 @@ export function applyBasemap(map, opts = {}) {
       map.setLayoutProperty("bldg-3d", "visibility", "visible");
     }
 
-    // Terrain'i etkinleştir
+    // Terrain'i etkinleÅŸtir
     if (map.getSource("dem")) map.setTerrain({ source: "dem", exaggeration: terrainExaggeration });
 
     if (!map.getLayer("sky")) {
@@ -469,20 +469,25 @@ export function applyBasemap(map, opts = {}) {
 function lockToHotel(map, cfg) {
   const isLandscape = window.innerWidth > window.innerHeight;
   const PAD_LAND = { top: 20, right: 20, bottom: 20, left: 20 };
-  const PAD_PORT = { top: 120, right: 16, bottom: 160, left: 16 };
+  const PAD_PORT = { top: 36, right: 14, bottom: 96, left: 14 };
 
-  const fitBox = cfg.HOTEL_BBOX;
-  map.fitBounds([[fitBox[0], fitBox[1]], [fitBox[2], fitBox[3]]], {
-    padding: isLandscape ? PAD_LAND : PAD_PORT,
-    maxZoom: 25,
-    pitch: cfg.DEFAULT_PITCH,
-    bearing: cfg.DEFAULT_BEARING
-  });
+  const fitBox = cfg.DRONE_TILES?.bounds ?? cfg.HOTEL_BBOX;
+  if (cfg.FIT_ON_LOAD !== false) {
+    map.fitBounds([[fitBox[0], fitBox[1]], [fitBox[2], fitBox[3]]], {
+      padding: isLandscape ? PAD_LAND : PAD_PORT,
+      maxZoom: 25,
+      pitch: cfg.DEFAULT_PITCH,
+      bearing: cfg.DEFAULT_BEARING
+    });
 
-  requestAnimationFrame(() => {
-    const fitZ = map.getZoom();
-    map.setMinZoom(Math.max(0, fitZ - (cfg.EXTRA_ZOOMOUT ?? 0.6)));
-  });
+    requestAnimationFrame(() => {
+      const fitZ = map.getZoom();
+      map.setMinZoom(Math.max(0, fitZ - (cfg.EXTRA_ZOOMOUT ?? 0.6)));
+    });
+  } else {
+    const baseMin = Math.max(0, (cfg.DEFAULT_ZOOM ?? 0) - (cfg.EXTRA_ZOOMOUT ?? 0.6));
+    map.setMinZoom(baseMin);
+  }
 
   const boundsForMax = cfg.MAX_BOUNDS ?? cfg.MASK?.bounds ?? cfg.HOTEL_BBOX;
   const padded = expandBoundsMeters([[boundsForMax[0], boundsForMax[1]], [boundsForMax[2], boundsForMax[3]]], 300);
@@ -496,4 +501,9 @@ function expandBoundsMeters(bounds, m = 100) {
   const dLon = m / (111320 * Math.cos((lat * Math.PI) / 180));
   return [[w - dLon, s - dLat], [e + dLon, n + dLat]];
 }
+
+
+
+
+
 
