@@ -1,4 +1,4 @@
-import { CONFIG } from "./config.js";
+﻿import { CONFIG } from "./config.js";
 import { resolveLang, applyBasicUIText } from "./i18n.js";
 import { initMap, applyBasemap } from "./map/initMap.js";
 import { loadAllData } from "./data/loadData.js";
@@ -7,7 +7,7 @@ import { addDebugLayers, setDebugLayersVisible, updateDebugOverlay } from "./map
 import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map/simulation.js";
 
 (async function start(){
-  // i18n başlangıcı
+  // i18n baÅğlangÄ±cÄ±
   resolveLang(CONFIG);
   applyBasicUIText();
 
@@ -30,7 +30,7 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
     isSimulating: false
   };
 
-  // Kullanıcının konumunu (gerçek veya simüle) temsil eden tekil marker
+  // KullanÄ±cÄ±nÄ±n konumunu (gerÃ§ek veya simÃ¼le) temsil eden tekil marker
   const userDotEl = document.createElement('div');
   userDotEl.className = 'user-dot';
   const userHeadingEl = document.createElement('div');
@@ -40,7 +40,7 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
   const userDotMarker = new maplibregl.Marker(userDotEl).setLngLat(map.getCenter()).addTo(map);
 
   /**
-   * Kullanıcının konumunu (hem state hem de harita üzerinde) güncelleyen merkezi fonksiyon.
+   * KullanÄ±cÄ±nÄ±n konumunu (hem state hem de harita Ã¼zerinde) gÃ¼ncelleyen merkezi fonksiyon.
    * @param {number[]} coords - [lon, lat]
    */
   function updateUserPosition(coords) {
@@ -67,10 +67,10 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
   if (!simCfg.enabled && 'geolocation' in navigator){
     try{ navigator.geolocation.getCurrentPosition(()=>{},()=>{}, {enableHighAccuracy:true, timeout:10000}); }catch{}
     navigator.geolocation.watchPosition(p=>{
-      // Gerçek GPS verisi geldiğinde, her türlü simülasyonu durdur.
+      // GerÃ§ek GPS verisi geldiÄğinde, her tÃ¼rlÃ¼ simÃ¼lasyonu durdur.
       stopSimulation();
       state.isSimulating = false;
-      document.getElementById("simulate").textContent = "Simülasyon";
+      document.getElementById("simulate").textContent = "SimÃ¼lasyon";
 
       const raw = [p.coords.longitude, p.coords.latitude];
       const filtered = smoothPosition(raw);
@@ -100,7 +100,7 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
   });
   initBottomSheet();
 
-  // Otomatik demo / sanal kullanıcı
+  // Otomatik demo / sanal kullanÄ±cÄ±
   if (simCfg.enabled && Array.isArray(simCfg.coord)) {
     map.__SIM_USER_CFG = { center: simCfg.coord, radiusKm: simCfg.radiusKm, loopDurationMs: simCfg.loopDurationMs };
     map.jumpTo({ center: simCfg.coord, zoom: CONFIG.DEFAULT_ZOOM, pitch: CONFIG.DEFAULT_PITCH, bearing: CONFIG.DEFAULT_BEARING });
@@ -108,12 +108,12 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
   }
   startUserSimulation(map, updateUserPosition);
 
-  const simulateBtn = document.getElementById("simulate");
+    const simulateBtn = document.getElementById("simulate");
   if (simulateBtn) {
     simulateBtn.addEventListener("click", () => {
       if (state.isSimulating) {
         stopSimulation();
-        startUserSimulation(map, updateUserPosition); // Rota simülasyonu durunca demo simülasyonuna dön
+        startUserSimulation(map, updateUserPosition); // rota simülasyonu durunca demo döngüsüne dön
         state.isSimulating = false;
         simulateBtn.textContent = "Simülasyon";
         return;
@@ -121,6 +121,12 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
 
       const route = map.getSource('route')._data;
       if (route && route.features.length > 0) {
+        const mainLine = route.features.find(f => f.geometry?.type === "LineString" && (!f.properties?.role || f.properties.role === "main"));
+        const startOnRoute = mainLine?.geometry?.coordinates?.[0];
+        if (startOnRoute) {
+          state.startCoord = startOnRoute;
+          updateUserPosition(startOnRoute); // simülasyon başlangıcını rotaya oturt
+        }
         stopSimulation(); // önce demo simülasyonunu durdur
         startRouteSimulation(map, route, updateUserPosition);
         state.isSimulating = true;
@@ -139,9 +145,9 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
   });
 
   async function routeNow(){
-    if (!state.destCoord) return toast("Lütfen bir hedef seçin.");
+    if (!state.destCoord) return toast("LÃ¼tfen bir hedef seÃ§in.");
     const start = await chooseStart(state, CONFIG);
-    if (!start) return toast("Başlangıç bulunamadı. Lütfen başlangıç seçin.");
+    if (!start) return toast("BaÅğlangÄ±Ã§ bulunamadÄ±. LÃ¼tfen baÅğlangÄ±Ã§ seÃ§in.");
 
     state.startCoord = start;
     setSource("start", fcPoint(start));
@@ -159,7 +165,7 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
     if (res?.error) return toast(res.error);
 
     const dirSum = document.getElementById("dirSum");
-    if (dirSum) dirSum.textContent = `${fmtDist(res.totalLenM)} · ${fmtDur(res.durSec)}`;
+    if (dirSum) dirSum.textContent = `${fmtDist(res.totalLenM)} Â· ${fmtDur(res.durSec)}`;
 
     if (CONFIG.DEBUG) {
       updateDebugOverlay(map, res.graph, [res.Ssnap, res.Tsnap], {showComps:true, showSnaps:true, showDead:true});
@@ -244,3 +250,5 @@ async function chooseStart(state, CONFIG){
   }
   return null;
 }
+
+

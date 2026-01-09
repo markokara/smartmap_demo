@@ -139,8 +139,8 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     source: "routes",
     paint: {
       "line-color": "#ffffff",
-      "line-width": ["+", ["coalesce", ["to-number", ["get", "width"]], ["to-number", ["get", "stroke_w"]], 2.4], 2],
-      "line-opacity": 0.6
+      "line-width": ["+", ["coalesce", ["to-number", ["get", "width"]], ["to-number", ["get", "stroke_w"]], 0.8], 0.4],
+      "line-opacity": 0.0
     },
     layout: { "line-cap": "round", "line-join": "round" },
     minzoom: 10
@@ -150,9 +150,9 @@ export async function initMap(containerId = "map", cfg = CONFIG) {
     type: "line",
     source: "routes",
     paint: {
-      "line-color": ["coalesce", ["get", "stroke"], ["get", "fill"], "#6c9f90"],
-      "line-width": ["coalesce", ["to-number", ["get", "width"]], ["to-number", ["get", "stroke_w"]], ["to-number", ["get", "stroke-width"]], 2.4],
-      "line-opacity": ["coalesce", ["to-number", ["get", "stroke_op"]], 1]
+      "line-color": ["coalesce", ["get", "stroke"], ["get", "fill"], "#6b7280"],
+      "line-width": ["coalesce", ["to-number", ["get", "width"]], ["to-number", ["get", "stroke_w"]], ["to-number", ["get", "stroke-width"]], 0.6],
+      "line-opacity": 0.08
     },
     layout: { "line-cap": "round", "line-join": "round" },
     minzoom: 10

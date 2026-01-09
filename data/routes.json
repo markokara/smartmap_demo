@@ -3,7 +3,7 @@
   "features": [
     {
       "type": "Feature",
-      "properties": { "id": "grid-col-8022", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-col-8022", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -17,7 +17,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-col-8032", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-col-8032", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -31,7 +31,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-col-8042", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-col-8042", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -45,7 +45,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-col-8052", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-col-8052", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -59,7 +59,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-col-8060", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-col-8060", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -74,7 +74,7 @@
 
     {
       "type": "Feature",
-      "properties": { "id": "grid-row-5979", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-row-5979", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -88,7 +88,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-row-5989", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-row-5989", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -102,7 +102,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-row-5995", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-row-5995", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -116,7 +116,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-row-6001", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-row-6001", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -130,7 +130,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "grid-row-6008", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "grid-row-6008", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -157,7 +157,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "diag-nw-se", "way": "foot", "category": "path", "width": 2 },
+      "properties": { "id": "diag-nw-se", "way": "foot", "category": "path", "width": 1 },
       "geometry": {
         "type": "LineString",
         "coordinates": [

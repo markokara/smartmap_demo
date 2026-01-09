@@ -87,7 +87,8 @@ const DATA_BASE_URL = "https://aihotels.agency/cdn"; // CDN kÃ¶kÃ¼
 const DATA_PATHS = {
   indoor : "https://aihotels.agency/cdn/geojson/indoor.json",
   outdoor: "https://aihotels.agency/cdn/geojson/outdoor.json",
-  routes : "https://aihotels.agency/cdn/geojson/routes.json",
+  // Rota motoru yerel grid'i kullansın diye routes'u lokale çektik
+  routes : "./data/routes.json",
 };
 
 const LOCAL_DATA_PATHS = {
@@ -102,7 +103,7 @@ const DATA_VERSION = "v1"; // Ä°stersen boÅŸ bÄ±rak; anlÄ±k invalidate i
  * ----------------------------------------------------------*/
 const SPEEDS = { walk: 1.35, bike: 4.5, shuttle: 7.0 }; // m/sn
 const ROUTE_LIMITS = {
-  MAX_CONNECTOR_M    : 200,
+  MAX_CONNECTOR_M    : 50,
   HIDE_CONNECTOR_LT_M: 50
 };
 
