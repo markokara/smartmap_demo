@@ -11,7 +11,7 @@
 const HOTEL_ID = "DEMO";
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoibWFya29rYXJhIiwiYSI6ImNtZ291OGdidDF6MWYya3NneTZjMG44bnkifQ.mWg-QQE8KTdhWZ8TrbMyI";
-const MAPTILER_KEY = "ym4UWHwsNK61YUsmqi5C";
+const MAPTILER_KEY = "ym4UWHwsNK61YUsmqi5";
 
 /* ------------------------------------------------------------
  * 2) HARITA BOLGE ve KAMERA
@@ -85,8 +85,8 @@ const TERRAIN = {
 const DATA_BASE_URL = "https://aihotels.agency/cdn"; // CDN kÃ¶kÃ¼
 
 const DATA_PATHS = {
-  indoor : "https://aihotels.agency/cdn/geojson/indoor.json",
-  outdoor: "https://aihotels.agency/cdn/geojson/outdoor.json",
+  indoor : "./data/indoor.json",
+  outdoor: "./data/outdoor.json",
   // Rota motoru yerel grid'i kullansın diye routes'u lokale çektik
   routes : "./data/routes.json",
 };

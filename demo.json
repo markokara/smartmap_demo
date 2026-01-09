@@ -3,13 +3,6 @@
   "features": [
     {
       "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          31.804398166858363,
-          36.598819209987454
-        ]
-      },
       "properties": {
         "fid": "42-mare-snack-bar",
         "category": "bar",
@@ -33,17 +26,11 @@
         "fill": "#F5F5F5",
         "fill_op": 0.35
       },
+      "geometry": { "type": "Point", "coordinates": [31.804398166858363, 36.59881920998744] },
       "id": "162a0686-b18a-4fc2-94a7-a8241534d488"
     },
     {
       "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          31.802638817277142,
-          36.59934732093754
-        ]
-      },
       "properties": {
         "fid": "35-turkish-cuisine-restaurant",
         "category": "restaurant",
@@ -67,17 +54,11 @@
         "fill": "#F5F5F5",
         "fill_op": 0.35
       },
+      "geometry": { "type": "Point", "coordinates": [31.802638817277142, 36.59934732093754] },
       "id": "56b365bb-54d6-40ec-8fb7-d3c9e1f39186"
     },
-    {
+        {
       "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          31.80427561041518,
-          36.59760477301714
-        ]
-      },
       "properties": {
         "fid": "60-pier",
         "category": "beach",
@@ -101,17 +82,11 @@
         "fill": "#F5F5F5",
         "fill_op": 0.35
       },
+      "geometry": { "type": "Point", "coordinates": [31.804275610415175, 36.597604773017125] },
       "id": "fb7b1cd2-46e9-49ed-8ba1-405971ae351f"
     },
     {
       "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          31.803717755381,
-          36.59912809775339
-        ]
-      },
       "properties": {
         "fid": "38-tropical-island-aquatower",
         "category": "pool",
@@ -135,17 +110,11 @@
         "fill": "#F5F5F5",
         "fill_op": 0.35
       },
+      "geometry": { "type": "Point", "coordinates": [31.803717755381, 36.59912809775338] },
       "id": "fe8386aa-75df-4d3c-82e7-404190a542a4"
     },
     {
       "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          31.80443618412798,
-          36.600634418738
-        ]
-      },
       "properties": {
         "fid": "03-terrazza-bar",
         "category": "bar",
@@ -169,17 +138,11 @@
         "fill": "#F5F5F5",
         "fill_op": 0.35
       },
+      "geometry": { "type": "Point", "coordinates": [31.80443618412798, 36.60063441873798] },
       "id": "a278a885-9ee4-4f9d-b1b2-908f36d7568f"
     },
     {
       "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          31.80397369705287,
-          36.600538166999385
-        ]
-      },
       "properties": {
         "fid": "04-asian-cuisine-restaurant",
         "category": "restaurant",
@@ -203,17 +166,10 @@
         "fill": "#F5F5F5",
         "fill_op": 0.35
       },
+      "geometry": { "type": "Point", "coordinates": [31.803973697052868, 36.60053816699937] },
       "id": "ce8537cf-8a80-499d-b569-eedda89490f6"
-    },
-    {
+    },{
       "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          31.8047004641397,
-          36.60100513982535
-        ]
-      },
       "properties": {
         "fid": "02-annex-reception-lobby-bar-vanilla",
         "category": "reception",
@@ -237,7 +193,9 @@
         "fill": "#F5F5F5",
         "fill_op": 0.35
       },
+      "geometry": { "type": "Point", "coordinates": [31.8047004641397, 36.60100513982535] },
       "id": "0709012f-286a-437c-a938-03005b7f1ef7"
     }
+    
   ]
 }

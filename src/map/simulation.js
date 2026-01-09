@@ -1,22 +1,23 @@
 /**
  * src/map/simulation.js
  * Kullanıcı konum simülasyonu (STATELESS)
- * Bu modül, animasyon döngüsünü yönetir ve her karede yeni koordinatları bir callback aracılığıyla bildirir.
- * Durum (state) ve harita marker'ı yönetimi bu modülün dışındadır.
+ * Animasyon döngüsünü yönetir, her karede yeni koordinatı callback ile bildirir.
  */
 
 let simulationTimer = null;
 
 /**
- * Belirtilen bir rota (LineString) üzerinde simülasyon başlatır.
- * @param {object} map - MapLibre harita örneği.
- * @param {object} route - GeoJSON FeatureCollection formatında rota.
- * @param {function} onUpdate - Her animasyon karesinde `(coords)` ile çağrılacak callback.
+ * Rota üzerinde simülasyon başlatır.
+ * @param {object} map - MapLibre örneği.
+ * @param {object} route - GeoJSON FeatureCollection (computeRoute sonucu).
+ * @param {function} onUpdate - Her karede `(coords)` ile çağrılır.
  */
 export function startRouteSimulation(map, route, onUpdate) {
   if (simulationTimer) stopSimulation();
 
-  const line = route.features.find(f => f.geometry.type === 'LineString');
+  const line =
+    route.features.find((f) => f.geometry?.type === "LineString" && (f.properties?.role ?? "main") === "main") ||
+    route.features.find((f) => f.geometry?.type === "LineString");
   if (!line) {
     console.error("No LineString feature found in the route data.");
     return;
@@ -24,11 +25,12 @@ export function startRouteSimulation(map, route, onUpdate) {
 
   const duration = 30000; // 30 saniye
   let startTime = performance.now();
+  const totalLen = turf.length(line);
 
   function animate(timestamp) {
     const elapsed = timestamp - startTime;
     const t = Math.min(elapsed / duration, 1);
-    const point = turf.along(line, t * turf.length(line)).geometry.coordinates;
+    const point = turf.along(line, t * totalLen).geometry.coordinates;
 
     onUpdate(point);
 
@@ -43,9 +45,9 @@ export function startRouteSimulation(map, route, onUpdate) {
 }
 
 /**
- * Harita merkezi etrafında dairesel bir demo simülasyonu başlatır.
- * @param {object} map - MapLibre harita örneği.
- * @param {function} onUpdate - Her animasyon karesinde `(coords)` ile çağrılacak callback.
+ * Harita merkezi etrafında dairesel demo simülasyonu başlatır.
+ * @param {object} map - MapLibre örneği.
+ * @param {function} onUpdate - Her karede `(coords)` ile çağrılır.
  */
 export function startUserSimulation(map, onUpdate) {
   if (simulationTimer) stopSimulation();
@@ -62,7 +64,7 @@ export function startUserSimulation(map, onUpdate) {
 
   function animate(timestamp) {
     const elapsed = timestamp - startTime;
-    const t = (elapsed % duration) / duration; // Döngüyü tekrarla
+    const t = (elapsed % duration) / duration; // Döngü tekrarı
 
     const point = turf.along(circleLine, t * circleLen, { units: "kilometers" }).geometry.coordinates;
     onUpdate(point);
