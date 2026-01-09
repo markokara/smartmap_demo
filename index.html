@@ -1,0 +1,321 @@
+﻿<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Misafir Harita</title>
+
+  <link href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" rel="stylesheet"/>
+  <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js" charset="utf-8"></script>
+
+  <style>
+    :root{
+      --shadow:0 16px 48px rgba(0,0,0,.22);
+      --muted:#5b6a6a;
+      --muted-soft:#7c8c86;
+      --bg:#f1f6f4;
+      --brand:#0f5132;
+      --brand-2:#127043;
+      --border:#cfe3da;
+      --field:#f4fbf7;
+      --panel-overlay:linear-gradient(180deg,rgba(9,30,24,.72) 0%,rgba(9,30,24,.08) 100%);
+      --card-bg:rgba(255,255,255,.96);
+    }
+    html,body{height:100%;margin:0}
+    body{
+      font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:#102621;
+      -webkit-tap-highlight-color:transparent;
+      padding-top:calc(env(safe-area-inset-top,0px));
+    }
+    *,*::before,*::after{box-sizing:border-box;}
+
+    #map{position:fixed; inset:0}
+
+    .backdrop{position:fixed; inset:0; background:rgba(7,25,20,.35); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:1095}
+    .backdrop.show{opacity:1; pointer-events:auto}
+
+    #grabDock{position:fixed; left:50%; bottom:calc(12px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:1100; display:flex; align-items:center; justify-content:center; height:38px; width:100%; pointer-events:auto; user-select:none; touch-action:none}
+    #grabDock.hidden{display:none}
+    #grabDock .bars{display:flex; flex-direction:column; gap:4px; align-items:center; padding:8px 12px; border-radius:16px; background:rgba(255,255,255,.95); border:1px solid var(--border); box-shadow:var(--shadow)}
+    #grabDock .bars .bar{width:72px; height:4px; border-radius:999px; background:linear-gradient(180deg,#cfe8dc,#86d1b5); box-shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 0 0 1px rgba(0,0,0,.06)}
+    #grabDock:active{cursor:grabbing}
+
+    .panel{
+      position:fixed;
+      left:50%;
+      bottom:0;
+      transform:translate(-50%,100%);
+      width:100%;
+      max-width:min(680px,94vw);
+      z-index:1101;
+      transition:transform .24s cubic-bezier(.2,.9,.2,1);
+      touch-action:pan-y;
+      padding:clamp(10px,1.6vw,16px) clamp(12px,3vw,18px) calc(env(safe-area-inset-bottom,0px) + 14px);
+      background:var(--panel-overlay);
+      pointer-events:none;
+    }
+    .panel.is-open{transform:translate(-50%,0)}
+    #sheet{will-change:transform; pointer-events:auto}
+
+    .card{background:var(--card-bg); backdrop-filter:saturate(1.05) blur(12px); border:1px solid rgba(207,227,218,.76); border-radius:16px; box-shadow:0 12px 38px rgba(16,38,33,.18); width:100%; max-width:600px; margin:0 auto;}
+    .p-8{padding:10px 12px; display:flex; flex-direction:column; gap:10px;}
+
+    #grab{height:28px; display:flex; align-items:center; justify-content:center; cursor:grab; user-select:none; touch-action:none}
+    #grab .bar{width:56px; height:4px; border-radius:999px; background:#cfe8dc; box-shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 0 0 1px rgba(0,0,0,.06)}
+
+    .control-shell{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(207,227,218,.7);
+      border-radius:16px;
+      padding:10px 12px;
+      box-shadow:0 14px 34px rgba(16,38,33,.16);
+      width:100%;
+    }
+    .search-line{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid rgba(15,81,50,.18);
+      background:#fff;
+    }
+    .search-icon{font-size:15px; color:var(--brand); display:flex; align-items:center; justify-content:center;}
+    .search-icon svg{width:16px; height:16px; display:block;}
+    .search-line input[type="search"]{
+      border:0;
+      background:transparent;
+      padding:0;
+      min-height:0;
+      font-size:13px;
+      flex:1 1 auto;
+      color:#0f3024;
+    }
+    .search-line input[type="search"]:focus{box-shadow:none; outline:none;}
+    .search-line input[type="search"]::placeholder{color:#7aa895;}
+    .search-clear{
+      border:0;
+      background:rgba(244,251,247,.95);
+      color:var(--muted);
+      width:24px;
+      height:24px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      cursor:pointer;
+      transition:all .15s ease;
+    }
+    .search-clear svg{width:10px; height:10px; display:block;}
+    .search-clear:hover{background:rgba(15,81,50,.12); color:var(--brand);}
+    .search-clear:active{transform:scale(.95);}
+    .search-clear[hidden]{display:none;}
+
+    .actions-line{display:flex; flex-wrap:wrap; gap:5px;}
+
+    .btn{background:#f4fbf7; color:var(--brand); border:1px solid rgba(15,81,50,.16); border-radius:10px; padding:5px 11px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; min-height:30px; font-size:12.8px; display:inline-flex; align-items:center; justify-content:center; gap:4px; line-height:1.35;}
+    .btn:hover{background:#e2f3ea; border-color:#a2d1b6}
+    .btn:active{transform:translateY(1px)}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .btn-primary{background:var(--brand); color:#fff; border-color:var(--brand)}
+    .btn-primary:hover{background:var(--brand-2); border-color:var(--brand-2)}
+    .btn-accent{background:linear-gradient(135deg,#36aa66,#238250); color:#fff; border-color:rgba(255,255,255,.22); box-shadow:0 10px 22px rgba(51,147,96,.18)}
+    .btn-accent:hover{background:linear-gradient(135deg,#2f8e58,#1d6d47); border-color:rgba(255,255,255,.28)}
+    .btn.subtle{background:rgba(244,251,247,.92); border-color:rgba(15,81,50,.12); color:#0f5132}
+    .btn.subtle:hover{background:rgba(227,242,236,.95)}
+    .btn.ghost{background:transparent; border-color:rgba(15,81,50,.18); color:var(--muted); border-style:dashed}
+    .btn.ghost:hover{color:var(--brand)}
+    .actions-line .btn{flex:1 1 auto; min-width:108px}
+
+    .results{background:rgba(255,255,255,.97); border:1px solid rgba(207,227,218,.85); border-radius:12px; max-height:32vh; overflow:auto; display:none; position:relative; z-index:2001; -webkit-overflow-scrolling:touch; box-shadow:0 10px 24px rgba(16,38,33,.12); margin-top:10px;}
+    .results .item{display:flex; flex-direction:column; gap:4px; padding:10px 12px; cursor:pointer; transition:background .15s ease}
+    .results .item:hover{background:#edf7f3}
+    .results .item-title{font-weight:600; color:#0f3024; font-size:14px;}
+    .results .item-meta{display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted-soft)}
+    .results .meta-pill{display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:999px; background:rgba(15,81,50,.08); color:#0f5132; font-weight:600}
+    .results .meta-note{padding:2px 8px; border-radius:999px; background:#f0f5f3}
+    .results .cat-dot{width:10px; height:10px; border-radius:50%; background:var(--dot,#0EA5E9); box-shadow:0 0 0 2px rgba(255,255,255,.85); display:inline-block}
+    .results .hint{padding:8px 12px; color:var(--muted); font-size:11.5px; display:flex; align-items:center; justify-content:space-between; gap:8px}
+
+    .category-suggestions{display:flex; flex-direction:column; gap:6px; padding:0 6px 6px; margin-bottom:4px;}
+    .category-suggestion{
+      border-radius:12px;
+      color:#fff;
+      padding:7px 11px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow:0 5px 14px rgba(15,23,42,.16);
+      border:1px solid rgba(255,255,255,.24);
+      background:var(--bg, linear-gradient(135deg,var(--cat-bg-soft,#3f8f6e),var(--cat-bg,#2563eb)));
+      transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+      appearance:none;
+      font:inherit;
+    }
+    .category-suggestion.is-active{
+      opacity:.92;
+      box-shadow:0 7px 20px rgba(15,23,42,.22);
+      border-color:rgba(255,255,255,.45);
+    }
+    .category-suggestion:hover{transform:translateY(-1px); box-shadow:0 12px 26px rgba(15,23,42,.24); opacity:.95}
+    .category-suggestion .label{display:flex; flex-direction:column; gap:2px}
+    .category-suggestion small{font-weight:500; opacity:.85; font-size:12px}
+    .category-suggestion .count{margin-left:12px; font-size:12px; display:flex; align-items:center; gap:4px}
+    .category-suggestion .count .chevron{display:inline-block; transition:transform .2s ease}
+    .category-suggestion:active .count .chevron{transform:translateX(2px)}
+    .category-suggestion:focus-visible{outline:2px solid rgba(255,255,255,.8); outline-offset:2px}
+
+    .active-category{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-radius:12px;
+      padding:9px 12px;
+      background:rgba(237,247,242,.92);
+      border:1px solid rgba(15,81,50,.12);
+      margin-bottom:8px;
+    }
+    .active-category .tag{display:flex; align-items:center; gap:8px; font-weight:600; color:#0f3024;}
+    .active-category .dot{width:10px; height:10px; border-radius:50%; background:var(--cat-color,#2563eb);}
+    .active-category .active-count{background:rgba(15,81,50,.12); color:#0f5132; border-radius:999px; padding:2px 8px; font-size:12px;}
+    .active-category button{
+      border:0;
+      background:transparent;
+      color:var(--brand);
+      font-weight:600;
+      cursor:pointer;
+      padding:6px 10px;
+      border-radius:10px;
+      transition:background .15s ease;
+    }
+    .active-category button:hover{background:rgba(15,81,50,.12);}
+
+    #dirBox{display:none; align-items:center; justify-content:space-between}
+    #dirSum{font-weight:700}
+    #clearRoute{margin-left:auto}
+
+    .acc{position:fixed; right:12px; bottom:12px; z-index:1005; background:#fff; border:1px solid var(--border); border-radius:999px; padding:6px 10px; font-size:12px; box-shadow:var(--shadow)}
+    .legal{color:#7c8c86; font-size:11px; text-align:right; padding:6px 10px}
+
+    .lang-float{position:fixed; left:12px; top:calc(12px + env(safe-area-inset-top,0px)); z-index:1200; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); padding:6px 8px}
+    .lang-float select{border:1px solid var(--border); background:var(--field); border-radius:10px; padding:6px 8px; outline:none}
+
+    @media (max-width:900px){
+      .panel{max-width:96vw;}
+      .control-shell{padding:12px; border-radius:15px;}
+      .actions-line .btn{flex:1 1 calc(50% - 6px);}
+      .search-line{width:100%;}
+    }
+    @media (max-width:600px){
+      body{font-size:14px;}
+      .panel{width:100%; padding-left:clamp(10px,5vw,16px); padding-right:clamp(10px,5vw,16px);}
+      .card{border-radius:18px; max-width:100%;}
+      .results{max-height:46vh}
+      .actions-line .btn{flex:1 1 calc(50% - 6px); min-width:0;}
+      .search-line{padding:6px 12px;}
+      .btn{font-size:12.5px; padding:6px 10px;}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lang-float" aria-label="Dil se&#231;ici">
+    <select id="lang">
+      <option value="tr">TR</option>
+      <option value="en">EN</option>
+      <option value="ru">RU</option>
+      <option value="de">DE</option>
+      <option value="pl">PL</option>
+    </select>
+  </div>
+
+  <div id="map" aria-label="Harita"></div>
+
+  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+
+  <div id="grabDock" aria-label="Paneli a&#231;mak i&#231;in yukar&#305; s&#252;r&#252;kleyin veya dokunun">
+    <div class="bars"><div class="bar"></div><div class="bar"></div></div>
+  </div>
+
+  <div class="panel" id="sheet" role="dialog" aria-modal="true" aria-label="Misafir arama ve rota paneli">
+    <div id="grab" aria-hidden="true"><div class="bar"></div></div>
+
+    <div class="card">
+      <div class="p-8">
+        <div class="control-shell">
+          <div class="search-line" role="search">
+            <span class="search-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+              </svg>
+            </span>
+            <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="Ara: restoran, spa, havuz..." aria-label="Harita &#252;zerinde arama yap"/>
+            <button id="clearSearch" class="search-clear" type="button" aria-label="Aramay&#305; temizle" hidden>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="3" x2="9" y2="9"></line>
+                <line x1="9" y1="3" x2="3" y2="9"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="actions-line">
+            <button id="pickDest" class="btn btn-accent">Hedef Se&#231;</button>
+            <button id="go" class="btn btn-primary" disabled>Git</button>
+            <button id="follow" class="btn subtle">Konum: Kapal&#305;</button>
+            <button id="reset" class="btn subtle">S&#305;f&#305;rla</button>
+            <button id="pickStart" class="btn ghost" style="display:none">Ba&#351;lang&#305;&#231; Se&#231;</button>
+          </div>
+        </div>
+
+        <div id="results" class="results"></div>
+
+        <div class="row" id="dirBox">
+          <span id="dirSum">&nbsp;</span>
+          <button id="clearRoute" class="btn">Rota Temizle</button>
+        </div>
+
+        <div class="legal">&copy; aihotelstech &middot; OpenStreetMap contributors &middot; MapTiler &middot; Mapbox</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="acc" class="acc" style="display:none" aria-live="polite"></div>
+
+  <script type="module" src="./src/main.js?v=20251105"></script>
+  <script type="module">
+    import { resolveLang, setLang, applyBasicUIText } from './src/i18n.js';
+    import { CONFIG } from './src/config.js';
+
+    const sel = document.getElementById('lang');
+    const current = resolveLang(CONFIG);
+    sel.value = current;
+
+    function repaintAll(lang){
+      setLang(lang);
+      applyBasicUIText();
+      window.dispatchEvent(new CustomEvent('app:lang-changed', { detail:{ lang }}));
+    }
+    sel.addEventListener('change', ()=> repaintAll(sel.value));
+    repaintAll(current);
+  </script>
+
+  <noscript>Haritay&#305; g&#246;r&#252;nt&#252;lemek i&#231;in JavaScript etkin olmal&#305;d&#305;r.</noscript>
+</body>
+</html>
+
+
+
+
+
+
+
