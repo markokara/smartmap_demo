@@ -129,14 +129,20 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
   }
 
   // Route simülasyonunu route kaynağından başlatır
-  function startRouteSimFromCurrentRoute() {
-    const route = map.getSource("route")?._data;
-    if (!route || !route.features?.length) return;
+  function startRouteSimFromCurrentRoute(routeGeo) {
+    const route = routeGeo || window.__ROUTE_LAST?.routeGeo || map.getSource("route")?._data;
+    if (!route || !route.features?.length) {
+      console.warn("[sim] route geo yok, simülasyon başlamadı");
+      return;
+    }
 
     const mainLine =
       route.features.find((f) => f.geometry?.type === "LineString" && (f.properties?.role ?? "main") === "main") ||
       route.features.find((f) => f.geometry?.type === "LineString");
-    if (!mainLine) return;
+    if (!mainLine) {
+      console.warn("[sim] main line bulunamadı");
+      return;
+    }
 
     const startOnRoute = mainLine.geometry.coordinates?.[0];
     if (startOnRoute) {
@@ -145,8 +151,14 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
     }
 
     stopSimulation(); // varsa demo döngüsünü kes
-    startRouteSimulation(map, route, updateUserPosition);
-    state.isSimulating = true;
+    requestAnimationFrame(() => {
+      try {
+        startRouteSimulation(map, route, updateUserPosition, { durationMs: 8000 });
+        state.isSimulating = true;
+      } catch (err) {
+        console.error("[sim] route sim başlatılamadı", err);
+      }
+    });
   }
 
   // Basemap
@@ -181,7 +193,7 @@ import { startUserSimulation, startRouteSimulation, stopSimulation } from "./map
     if (dirSum) dirSum.textContent = `${fmtDist(res.totalLenM)} · ${fmtDur(res.durSec)}`;
 
     // Rota hazır → simülasyonu otomatik başlat
-    startRouteSimFromCurrentRoute();
+    requestAnimationFrame(() => startRouteSimFromCurrentRoute(res.routeGeo));
 
     if (CONFIG.DEBUG) {
       updateDebugOverlay(map, res.graph, [res.Ssnap, res.Tsnap], { showComps: true, showSnaps: true, showDead: true });

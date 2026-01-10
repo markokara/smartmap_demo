@@ -11,8 +11,9 @@ let simulationTimer = null;
  * @param {object} map - MapLibre örneği.
  * @param {object} route - GeoJSON FeatureCollection (computeRoute sonucu).
  * @param {function} onUpdate - Her karede `(coords)` ile çağrılır.
+ * @param {object} opts - { durationMs?: number, onFinish?: function }
  */
-export function startRouteSimulation(map, route, onUpdate) {
+export function startRouteSimulation(map, route, onUpdate, opts = {}) {
   if (simulationTimer) stopSimulation();
 
   const line =
@@ -23,14 +24,14 @@ export function startRouteSimulation(map, route, onUpdate) {
     return;
   }
 
-  const duration = 30000; // 30 saniye
+  const duration = Math.max(2000, opts.durationMs ?? 8000); // varsayılan: 8 sn
   let startTime = performance.now();
-  const totalLen = turf.length(line);
+  const totalLen = turf.length(line, { units: "kilometers" });
 
   function animate(timestamp) {
     const elapsed = timestamp - startTime;
     const t = Math.min(elapsed / duration, 1);
-    const point = turf.along(line, t * totalLen).geometry.coordinates;
+    const point = turf.along(line, t * totalLen, { units: "kilometers" }).geometry.coordinates;
 
     onUpdate(point);
 
@@ -38,6 +39,7 @@ export function startRouteSimulation(map, route, onUpdate) {
       simulationTimer = requestAnimationFrame(animate);
     } else {
       simulationTimer = null; // Simülasyon bitti
+      if (typeof opts.onFinish === "function") opts.onFinish();
     }
   }
 

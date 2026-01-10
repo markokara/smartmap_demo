@@ -646,7 +646,9 @@ export function computeRoute(opts) {
     if (destXY && destConnM >= HIDE_CONNECTOR_LT_M) {
       features.push({ type: "Feature", properties: { role: "connector" }, geometry: { type: "LineString", coordinates: [Tsnap.xy, destXY] } });
     }
-    map.getSource("route")?.setData({ type: "FeatureCollection", features });
+
+    const routeGeo = { type: "FeatureCollection", features };
+    map.getSource("route")?.setData(routeGeo);
 
     // 7) Mesafe & süre
     const mainLenM = totalLength(nodeCoords);
@@ -667,10 +669,10 @@ export function computeRoute(opts) {
     if (bb) map.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: { top:120, right:16, bottom:160, left:16 }, maxZoom: 25 });
 
     if (typeof window !== "undefined") {
-      window.__ROUTE_LAST = { graph, Ssnap, Tsnap, Sid, Tid, startConnM, destConnM, nodePath, profile };
+      window.__ROUTE_LAST = { graph, Ssnap, Tsnap, Sid, Tid, startConnM, destConnM, nodePath, profile, routeGeo };
     }
 
-    return { coords: nodeCoords, totalLenM, durSec, graph, Ssnap, Tsnap };
+    return { coords: nodeCoords, totalLenM, durSec, graph, Ssnap, Tsnap, routeGeo };
   } catch (err) {
     logWarn("computeRoute hata:", err?.message || err);
     return { error: "Rota hesaplanırken hata oluştu." };
